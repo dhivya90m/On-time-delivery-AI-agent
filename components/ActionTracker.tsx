@@ -19,6 +19,7 @@ const ActionTracker: React.FC<ActionTrackerProps> = ({ actions }) => {
           <table className="w-full text-sm text-left text-gray-300">
             <thead className="text-xs text-gray-400 uppercase bg-gray-700 sticky top-0">
               <tr>
+                <th scope="col" className="px-6 py-3">KPI</th>
                 <th scope="col" className="px-6 py-3">Region</th>
                 <th scope="col" className="px-6 py-3">Week</th>
                 <th scope="col" className="px-6 py-3">Action Taken</th>
@@ -29,13 +30,14 @@ const ActionTracker: React.FC<ActionTrackerProps> = ({ actions }) => {
             <tbody>
               {actions.map(action => (
                 <tr key={action.id} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
-                  <td className="px-6 py-4 font-medium text-white">{action.alert.region}</td>
+                  <td className="px-6 py-4 font-medium text-white">{action.alert.kpi}</td>
+                  <td className="px-6 py-4">{action.alert.region}</td>
                   <td className="px-6 py-4">{action.alert.week}</td>
                   <td className="px-6 py-4">{action.actionTaken}</td>
                   <td className="px-6 py-4">
                     <span className="flex items-center">
-                      {action.previousRate}% → {action.newRate}%
-                      {action.newRate > action.previousRate ? (
+                      {action.previousValue} → {action.newValue}
+                      {action.newValue > action.previousValue ? (
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-400 ml-2" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
                         </svg>

@@ -1,6 +1,6 @@
-
 import { GoogleGenAI } from "@google/genai";
-import { Alert } from '../types';
+import { Alert, KpiData } from '../types';
+import { KPI_DEFINITIONS } from '../constants';
 
 const getGeminiApiKey = (): string => {
   const apiKey = process.env.API_KEY;
@@ -13,14 +13,21 @@ const getGeminiApiKey = (): string => {
 export const getCorrectiveActions = async (alert: Alert): Promise<string[]> => {
   try {
     const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
+    const kpiInfo = KPI_DEFINITIONS[alert.kpi];
+
+    const unit = kpiInfo.unit === '%' ? '%' : ` ${kpiInfo.unit}`;
+
+    const deviationDescription = kpiInfo.higherIsBetter
+      ? `has fallen to ${alert.value}${unit}, which is below the target of ${alert.targetRate}${unit}`
+      : `has risen to ${alert.value}${unit}, which is above the target of ${alert.targetRate}${unit}`;
 
     const prompt = `
       You are an expert in logistics and supply chain management acting as an AI agent.
-      The On-Time Delivery (OTD) rate for the "${alert.region}" region has dropped to ${alert.otdRate}%, which is below the target of ${alert.targetRate}%.
+      The "${alert.kpi}" metric for the "${alert.region}" region ${deviationDescription}.
       This occurred in week ${alert.week}.
 
       Based on this deviation, provide a concise list of 2-3 specific, actionable, and distinct recommendations to investigate and resolve this issue.
-      Examples of actions include 'Initiate a review of last-mile delivery routes for this region', 'Escalate to the regional logistics manager for immediate investigation', or 'Analyze carrier performance data for potential delays'.
+      Examples of actions include 'Initiate a review of last-mile delivery routes for this region', 'Analyze carrier performance data for potential delays', 'Review warehouse picking processes to improve order accuracy', or 'Investigate negative customer feedback for common themes'.
 
       Format the output as a valid JSON array of strings. For example:
       ["Action 1", "Action 2", "Action 3"]
@@ -50,4 +57,54 @@ export const getCorrectiveActions = async (alert: Alert): Promise<string[]> => {
       'Suggestion: Check for regional disruptions or events.',
     ];
   }
+};
+
+
+export const getConversationalInsight = async (prompt: string, data: KpiData[]): Promise<string> => {
+    if (!data || data.length === 0) {
+        return "I can't answer that as there is no data loaded. Please upload a CSV file first.";
+    }
+
+    try {
+        const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
+        const availableKpis = [...new Set(data.map(d => d.kpi))];
+
+        const systemPrompt = `
+          You are a helpful and expert Logistics Data Analyst AI.
+          You will be given a user's question and a dataset of logistics Key Performance Indicator (KPI) data.
+          Your task is to analyze the data to answer the user's question in a clear, concise, and helpful manner.
+
+          The data is provided as a JSON array, where each object represents a KPI value for a specific region and week.
+          The available KPIs in this dataset are: ${availableKpis.join(', ')}.
+
+          Here are the user intents you should be able to handle:
+          1.  **KPI Trend Insight:** If asked about trends, analyze the 'value' for a KPI over the 'week's. Explain if it's improving or deteriorating.
+          2.  **Anomaly Detection:** If asked to detect anomalies or find problematic areas, identify regions or weeks with performance that is significantly worse than others or below the 'target'.
+          3.  **Performance Recommendation:** If asked for suggestions or actions, provide logical, data-driven recommendations to improve the specified KPI.
+          4.  **Data Queries:** If asked for a specific value (e.g., "what was the on-time delivery in Europe in week 10?"), find and state the exact data point.
+
+          **IMPORTANT:**
+          - If the user asks about a metric not present in the data (e.g., 'escalation accuracy'), you MUST state that the data for that metric is not available and list the KPIs you CAN analyze.
+          - Base all your answers strictly on the provided data. Do not make up information.
+          - Format your response using markdown for readability (e.g., use lists, bold text).
+          - Be conversational and helpful.
+
+          Here is the dataset:
+          ${JSON.stringify(data)}
+        `;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [
+                { role: 'user', parts: [{ text: systemPrompt }] },
+                { role: 'model', parts: [{ text: "Understood. I am ready to analyze the logistics data. Please provide the user's question." }] },
+                { role: 'user', parts: [{ text: prompt }] }
+            ],
+        });
+
+        return response.text;
+    } catch (error) {
+        console.error('Error fetching conversational insight from Gemini:', error);
+        return 'Sorry, I encountered an error while analyzing the data. Please try again.';
+    }
 };

@@ -1,5 +1,5 @@
 {
-  "name": "On-Time Delivery AI Agent",
-  "description": "An AI-powered dashboard to track weekly On-Time Delivery rates, detect KPI deviations, recommend corrective actions using Gemini, and evaluate outcomes.",
+  "name": "Logistics KPI AI Agent",
+  "description": "An AI-powered dashboard to track logistics KPIs. Features a conversational AI Playground to get trend insights, detect anomalies, and receive operational recommendations from your data.",
   "requestFramePermissions": []
 }

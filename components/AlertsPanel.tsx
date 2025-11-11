@@ -32,7 +32,7 @@ const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts, onLogAction }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <h3 className="text-lg font-semibold text-white">No Active Alerts</h3>
-        <p className="text-gray-400 mt-1">All regions are currently meeting their On-Time Delivery targets.</p>
+        <p className="text-gray-400 mt-1">All KPIs are currently meeting their targets across all regions.</p>
       </div>
     );
   }
@@ -45,9 +45,9 @@ const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts, onLogAction }) => {
           <div key={alert.id} className="bg-gray-700/50 p-4 rounded-md border border-yellow-500/50">
             <div className="flex justify-between items-start">
               <div>
-                <p className="font-semibold text-yellow-400">{alert.region} - Week {alert.week}</p>
+                <p className="font-semibold text-yellow-400">{alert.kpi} - {alert.region} - Week {alert.week}</p>
                 <p className="text-sm text-gray-300">
-                  OTD Rate dropped to <span className="font-bold text-red-400">{alert.otdRate}%</span> (Target: {alert.targetRate}%)
+                  Value dropped to <span className="font-bold text-red-400">{alert.value}</span> (Target: {alert.targetRate})
                 </p>
               </div>
               {!recommendations[alert.id] && (
