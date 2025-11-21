@@ -109,34 +109,36 @@ export const getConversationalInsight = async (prompt: string, data: KpiData[]):
     }
 };
 
-export const generateExecutiveBrief = async (data: KpiData[], alerts: Alert[]): Promise<string> => {
+export const generateExecutiveBrief = async (data: KpiData[], alerts: Alert[], targetWeek: number): Promise<string> => {
   try {
     const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
     
-    // Summarize data to avoid huge context window usage if data is large
-    const latestWeek = Math.max(...data.map(d => d.week));
-    const recentData = data.filter(d => d.week >= latestWeek - 1);
+    // Filter data for the specific target week and the previous week for trend comparison
+    const recentData = data.filter(d => d.week === targetWeek || d.week === targetWeek - 1);
+    
+    // Filter alerts to only include those relevant to the target week
+    const weekAlerts = alerts.filter(a => a.week === targetWeek);
     
     const prompt = `
       You are the Head of Logistics Operations writing a "Weekly Business Review" email to the executive leadership team.
       
       Context:
-      - Current Week: ${latestWeek}
-      - Total Active Alerts (Risks): ${alerts.length}
+      - Report Week: ${targetWeek}
+      - Total Active Alerts (Risks) for Week ${targetWeek}: ${weekAlerts.length}
       
-      Data Summary:
+      Data Summary (Includes previous week for context if available):
       ${JSON.stringify(recentData)}
       
-      Active Alerts (Critical Issues):
-      ${JSON.stringify(alerts)}
+      Active Alerts (Critical Issues for Week ${targetWeek}):
+      ${JSON.stringify(weekAlerts)}
 
       Task:
       Write a professional, concise executive summary (approx 200-300 words) in Markdown format.
       
       Structure:
-      1. **Executive Summary**: A 2-sentence overview of performance. Was it a good week or bad week?
+      1. **Executive Summary**: A 2-sentence overview of performance for Week ${targetWeek}. Was it improved or worsened compared to the prior week?
       2. **Key Performance Highlights**: Mention 1-2 regions or KPIs performing well.
-      3. **Critical Risks & Bottlenecks**: Summarize the active alerts. Be specific about which region is failing.
+      3. **Critical Risks & Bottlenecks**: Summarize the active alerts for this specific week.
       4. **Proposed Strategic Actions**: Suggest 3 high-level strategic initiatives to fix the risks (e.g., "Renegotiate carrier contracts in Europe").
       
       Tone: Professional, data-driven, decisive.
