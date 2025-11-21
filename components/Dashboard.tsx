@@ -4,6 +4,7 @@ import AlertsPanel from './AlertsPanel';
 import ActionTracker from './ActionTracker';
 import MetricCard from './MetricCard';
 import Playground from './Playground';
+import ExecutiveBrief from './ExecutiveBrief';
 import { Region, KpiData, Alert, TrackedAction, RawDeliveryRecord, KpiName, ChatMessage } from '../types';
 import { KPI_DEFINITIONS, REGIONS, ON_TIME_DELIVERY_THRESHOLD_MINUTES } from '../constants';
 import { getConversationalInsight } from '../services/geminiService';
@@ -459,6 +460,9 @@ const Dashboard: React.FC = () => {
           </div>
 
           <ActionTracker actions={trackedActions} />
+
+          {/* Executive Brief placed before Playground to prioritize high-level summary */}
+          <ExecutiveBrief data={kpiData} alerts={alerts} />
 
           <Playground 
             messages={chatMessages}

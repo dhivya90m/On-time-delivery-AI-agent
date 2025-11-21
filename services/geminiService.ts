@@ -108,3 +108,48 @@ export const getConversationalInsight = async (prompt: string, data: KpiData[]):
         return 'Sorry, I encountered an error while analyzing the data. Please try again.';
     }
 };
+
+export const generateExecutiveBrief = async (data: KpiData[], alerts: Alert[]): Promise<string> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
+    
+    // Summarize data to avoid huge context window usage if data is large
+    const latestWeek = Math.max(...data.map(d => d.week));
+    const recentData = data.filter(d => d.week >= latestWeek - 1);
+    
+    const prompt = `
+      You are the Head of Logistics Operations writing a "Weekly Business Review" email to the executive leadership team.
+      
+      Context:
+      - Current Week: ${latestWeek}
+      - Total Active Alerts (Risks): ${alerts.length}
+      
+      Data Summary:
+      ${JSON.stringify(recentData)}
+      
+      Active Alerts (Critical Issues):
+      ${JSON.stringify(alerts)}
+
+      Task:
+      Write a professional, concise executive summary (approx 200-300 words) in Markdown format.
+      
+      Structure:
+      1. **Executive Summary**: A 2-sentence overview of performance. Was it a good week or bad week?
+      2. **Key Performance Highlights**: Mention 1-2 regions or KPIs performing well.
+      3. **Critical Risks & Bottlenecks**: Summarize the active alerts. Be specific about which region is failing.
+      4. **Proposed Strategic Actions**: Suggest 3 high-level strategic initiatives to fix the risks (e.g., "Renegotiate carrier contracts in Europe").
+      
+      Tone: Professional, data-driven, decisive.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    return response.text;
+  } catch (error) {
+    console.error('Error generating executive brief:', error);
+    return "Error generating report. Please check your internet connection or API limits.";
+  }
+};
